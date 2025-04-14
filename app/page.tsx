@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import HomeHeader from "@/components/home-header";
 import { Hero } from "@/components/hero";
+import TransactionTable from "@/components/TransactionTable";
 
 const HomePage = () => {
   const { isSignedIn } = useClerk(); // Check if the user is signed in
