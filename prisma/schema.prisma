@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Model to store Plaid item information linked to a user
+model UserPlaidItem {
+  id        String   @id @default(cuid()) // Unique ID for this specific link
+  userId    String   @unique // Clerk User ID - Ensure this is unique per user
+  itemId    String   @unique // Plaid Item ID - Useful for identifying the link
+  encryptedAccessToken String @db.Text // Store the encrypted token (use TEXT for potentially longer strings)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId]) // Add an index for faster lookups by userId
+}
+
+// You might have a User model if you store other user data,
+// but for just storing the token, UserPlaidItem linked by userId is sufficient.
+// model User {
+//   id            String   @id @unique // Clerk User ID
+//   email         String?  @unique
+//   plaidItems    UserPlaidItem[]
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+// }
