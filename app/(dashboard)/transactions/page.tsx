@@ -1,7 +1,10 @@
+import TransactionTable from "@/components/TransactionTable";
+
 const TransactionsPage = () => {
     return (
         <div>
-            Transaction page
+            Welcome to your transaction page!
+            <TransactionTable />
         </div>
     );
 }
