@@ -1,11 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,24 +7,116 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Model to store Plaid item information linked to a user
-model UserPlaidItem {
-  id        String   @id @default(cuid()) // Unique ID for this specific link
-  userId    String   @unique // Clerk User ID - Ensure this is unique per user
-  itemId    String   @unique // Plaid Item ID - Useful for identifying the link
-  encryptedAccessToken String @db.Text // Store the encrypted token (use TEXT for potentially longer strings)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model credit_cards {
+  CARD_ID       Int                    @id @default(autoincrement())
+  USER_ID       Int
+  CARD_NUMBER   String                 @unique(map: "CARD_NUMBER") @db.VarChar(16)
+  CARD_TYPE     credit_cards_CARD_TYPE
+  CREDIT_LIMIT  Decimal                @db.Decimal(10, 2)
+  BALANCE       Decimal?               @default(0.00) @db.Decimal(10, 2)
+  INTEREST_RATE Decimal?               @db.Decimal(5, 2)
+  DUE_DATE      DateTime               @db.Date
+  STATUE        credit_cards_STATUE?   @default(Active)
+  users         users                  @relation(fields: [USER_ID], references: [USER_ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CREDIT_CARDS")
+  settlements   settlements[]
+  transactions  transactions[]
 
-  @@index([userId]) // Add an index for faster lookups by userId
+  @@index([USER_ID], map: "FK_CREDIT_CARDS")
 }
 
-// You might have a User model if you store other user data,
-// but for just storing the token, UserPlaidItem linked by userId is sufficient.
-// model User {
-//   id            String   @id @unique // Clerk User ID
-//   email         String?  @unique
-//   plaidItems    UserPlaidItem[]
-//   createdAt     DateTime @default(now())
-//   updatedAt     DateTime @updatedAt
-// }
+model settlements {
+  SET_ID          Int                 @id @default(autoincrement())
+  USER_ID         Int?
+  CARD_ID         Int?
+  ORIGINAL_AMOUNT Decimal             @db.Decimal(10, 2)
+  SETTLED_AMOUNT  Decimal             @db.Decimal(10, 2)
+  SET_DATE        DateTime?           @default(now()) @db.Timestamp(0)
+  STATUS          settlements_STATUS? @default(Pending)
+  users           users?              @relation(fields: [USER_ID], references: [USER_ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_SETTLEMENTS")
+  credit_cards    credit_cards?       @relation(fields: [CARD_ID], references: [CARD_ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_SETTLEMENTS1")
+
+  @@index([USER_ID], map: "FK_SETTLEMENTS")
+  @@index([CARD_ID], map: "FK_SETTLEMENTS1")
+}
+
+model transactions {
+  TRANS_ID     Int                     @id @default(autoincrement())
+  CARD_ID      Int?
+  TRANS_TYPE   transactions_TRANS_TYPE
+  AMOUNT       Decimal                 @db.Decimal(10, 2)
+  MERCHANT     String?                 @db.VarChar(100)
+  TRANS_DATE   DateTime?               @default(now()) @db.Timestamp(0)
+  credit_cards credit_cards?           @relation(fields: [CARD_ID], references: [CARD_ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_TRANSACTIONS")
+
+  @@index([CARD_ID], map: "FK_TRANSACTIONS")
+}
+
+model userplaiditem {
+  id                   String   @id @default(cuid())
+  userId               String   @unique(map: "userId")
+  itemId               String   @unique(map: "itemId")
+  encryptedAccessToken String   @db.Text
+  createdAt            DateTime @default(now()) @db.DateTime(0)
+  updatedAt            DateTime @updatedAt @db.DateTime(0)
+
+  @@index([userId], map: "idx_userId")
+}
+
+model users {
+  USER_ID      Int            @id @default(autoincrement())
+  PASS         String         @db.VarChar(20)
+  USER_LNAME   String         @db.VarChar(15)
+  USER_FNAME   String         @db.VarChar(15)
+  STREET       String?        @db.VarChar(25)
+  CITY         String?        @db.VarChar(20)
+  STATE        String?        @db.Char(2)
+  ZIP          String?        @db.VarChar(15)
+  GENDER       String?        @db.Char(1)
+  PHONE        String?        @db.VarChar(10)
+  EMAIL        String?        @db.VarChar(30)
+  credit_cards credit_cards[]
+  settlements  settlements[]
+}
+
+model plaidtransaction {
+  id                String   @id
+  userId            String
+  transactionId     String   @unique(map: "PlaidTransaction_transactionId_key")
+  account_id        String
+  name              String
+  amount            Float
+  iso_currency_code String?
+  date              DateTime
+  category          String?
+  createdAt         DateTime @default(now())
+
+  @@index([userId], map: "PlaidTransaction_userId_idx")
+}
+
+enum transactions_TRANS_TYPE {
+  Purchase
+  Fee
+  Interest
+  Refund
+  Payment
+  Subscription
+}
+
+enum credit_cards_CARD_TYPE {
+  Visa
+  MasterCard
+  Amex
+  Discover
+}
+
+enum settlements_STATUS {
+  Pending
+  Completed
+  Rejected
+}
+
+enum credit_cards_STATUE {
+  Active
+  Blocked
+  Closed
+}
