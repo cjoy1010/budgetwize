@@ -5,109 +5,94 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { decrypt } from "@/lib/encryption";
 import { plaidClient } from "@/lib/plaid";
-import { AccountsGetRequest, LiabilitiesGetRequest } from "plaid";
 
 export async function POST(request: Request) {
-  const token = request.headers.get("authorization");
   const { userId } = await auth(request);
-
-  if (!userId) {
+  if (!userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const API_KEY = process.env.GEMINI_API_KEY;
   const MODEL_NAME = "gemini-2.0-flash-exp";
-
-  if (!API_KEY) {
+  if (!API_KEY)
     return NextResponse.json(
       { error: "Missing Gemini API key" },
       { status: 500 }
     );
-  }
 
   try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-    const { history, message, context } = await request.json();
-    let { accounts = [], transactions = [] } = context ?? {};
-
-    // If transactions are missing, sync from DB
-    if (!transactions.length) {
-      transactions = await prisma.plaidTransaction.findMany({
-        where: { userId },
-        orderBy: { date: "desc" },
-      });
+    // 1) Fetch financial data context
+    const transactions = await prisma.plaidtransaction.findMany({
+      where: { userId },
+      orderBy: { date: "desc" },
+      take: 5,
+    });
+    const accounts: Array<{
+      name: string;
+      balances?: { available?: number; current?: number };
+    }> = [];
+    const item = await prisma.userplaiditem.findUnique({ where: { userId } });
+    if (item) {
+      const token = decrypt(item.encryptedAccessToken);
+      const resp = await plaidClient.accountsGet({ access_token: token });
+      accounts.push(...resp.data.accounts);
     }
 
-    // If accounts are missing, pull balances
-    if (!accounts.length) {
-      try {
-        const plaidItem = await prisma.userPlaidItem.findUnique({
-          where: { userId },
-        });
-
-        if (plaidItem) {
-          const accessToken = decrypt(plaidItem.encryptedAccessToken);
-          const response = await plaidClient.accountsGet({
-            access_token: accessToken,
-          });
-          accounts = response.data.accounts;
-        }
-      } catch (err) {
-        console.error("Failed to fetch accounts for context", err);
-      }
-    }
-
-    // Handle basic balance question locally
-    if (/how much.*plaid.*account/i.test(message)) {
-      const total = accounts.reduce(
-        (sum, acc) =>
-          sum + (acc.balances?.available ?? acc.balances?.current ?? 0),
-        0
+    // 2) Build context string for LLM
+    const contextLines: string[] = [];
+    if (accounts.length) {
+      contextLines.push("Accounts:");
+      accounts.forEach((a) =>
+        contextLines.push(
+          `- ${a.name}: $${(
+            a.balances?.available ??
+            a.balances?.current ??
+            0
+          ).toFixed(2)}`
+        )
       );
-      return NextResponse.json({
-        text: `Your total available balance is $${total.toFixed(2)}.`,
-      });
     }
-
-    // Include Plaid financial context if needed
-    let financialContext = "";
-    const requiresFinancialData =
-      /debt|pay off|financial|accounts|balance|strategy|spend|expense/i.test(
-        message
+    if (transactions.length) {
+      contextLines.push("Recent Transactions:");
+      transactions.forEach((t) =>
+        contextLines.push(
+          `- ${t.name}: $${t.amount} on ${t.date.toISOString().split("T")[0]}`
+        )
       );
-
-    if (requiresFinancialData && accounts.length) {
-      let accountDetails = "Financial Context:\n";
-
-      accounts.forEach((acc) => {
-        accountDetails += `- ${acc.name} (${acc.subtype}): Balance $${
-          acc.balances?.current ?? acc.balances?.available ?? "N/A"
-        }\n`;
-      });
-
-      transactions.slice(0, 5).forEach((tx) => {
-        accountDetails += `Transaction: ${tx.name} $${tx.amount} on ${tx.date}\n`;
-      });
-
-      financialContext = accountDetails;
     }
+    const financialContext = contextLines.join("\n");
 
-    const systemInstruction = `You're an assistant helping with financial literacy and debt strategy. Add disclaimers if needed.`;
-    const promptToSend = financialContext
+    // 3) Read user message
+    const { message } = await request.json();
+    const userPrompt = financialContext
       ? `${message}\n\n${financialContext}`
       : message;
 
-    const chat = model.startChat({ history: history || [] });
-    const result = await chat.sendMessage(promptToSend);
-    const text = result.response.text();
+    // 4) Call the Gemini generateContent API
+    const systemInstruction =
+      "You are a financial advisor. Use the provided Accounts and Recent Transactions to answer the user's question. Provide clear, actionable advice and include appropriate disclaimers.";
+
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    // Attach system instruction so it's applied automatically
+    const model = genAI.getGenerativeModel({
+      model: MODEL_NAME,
+      systemInstruction: {
+        role: "system",
+        parts: [{ text: systemInstruction }],
+      },
+    });
+
+    // Generate content with a single user prompt
+    const response = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    });
+
+    // Await the final aggregated response
+    const result = await response.response;
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
     return NextResponse.json({ text });
-  } catch (error: any) {
-    console.error("Chat API Error:", error);
-    return NextResponse.json(
-      { error: "Failed to get response from AI" },
-      { status: 500 }
-    );
+  } catch (e: any) {
+    console.error("Chat API Error:", e);
+    return NextResponse.json({ error: "AI error" }, { status: 500 });
   }
 }
