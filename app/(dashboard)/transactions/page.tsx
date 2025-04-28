@@ -1,8 +1,7 @@
 const TransactionsPage = () => {
     return (
         <div>
-            Welcome to your transaction page!
-            <TransactionTable />
+            Transaction page
         </div>
     );
 }

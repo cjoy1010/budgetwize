@@ -15,7 +15,6 @@ const CreditCardPayoffCalculator: React.FC = () => {
   const [balance, setBalance] = useState<string>('');
   const [monthlyPayment, setMonthlyPayment] = useState<string>('');
   const [apr, setApr] = useState<string>('');
-  const [totalPaid, setTotalPaid] = useState<number>(0);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [payoffSchedule, setPayoffSchedule] = useState<any[]>([]);
   const [newSubscriptionName, setNewSubscriptionName] = useState<string>('');
@@ -83,61 +82,40 @@ const CreditCardPayoffCalculator: React.FC = () => {
     setTotalBalance(balanceNum);
   };
 
-  const handleLogPayment = () => {
-    const monthlyPaymentNum = parseFloat(monthlyPayment);
-    if (!monthlyPaymentNum) {
-      alert('Please enter a monthly payment amount');
-      return;
-    }
-
-    setTotalPaid(prev => prev + monthlyPaymentNum);
-  };
-
   const handleSubscriptionChange = (id: string) => {
     const newSubscriptions = subscriptions.map(sub => 
       sub.id === id ? { ...sub, checked: !sub.checked } : sub
     );
     setSubscriptions(newSubscriptions);
-    updateMonthlyPayment(newSubscriptions);
   };
 
   const handleSubscriptionEdit = (id: string) => {
-    const newSubscriptions = subscriptions.map(sub =>
+    const newSubscriptions = subscriptions.map(sub => 
       sub.id === id ? { ...sub, isEditing: true } : sub
     );
     setSubscriptions(newSubscriptions);
   };
 
   const handleSubscriptionSave = (id: string, newName: string, newAmount: string, isRecurring: boolean) => {
-    const amount = parseFloat(newAmount);
-    if (isNaN(amount)) {
-      alert('Please enter a valid amount');
-      return;
-    }
-
-    const newSubscriptions = subscriptions.map(sub =>
-      sub.id === id ? { ...sub, name: newName, amount, isRecurring, isEditing: false } : sub
+    const newSubscriptions = subscriptions.map(sub => 
+      sub.id === id ? { 
+        ...sub, 
+        name: newName, 
+        amount: parseFloat(newAmount), 
+        isRecurring,
+        isEditing: false 
+      } : sub
     );
     setSubscriptions(newSubscriptions);
-    updateMonthlyPayment(newSubscriptions);
   };
 
   const handleAddSubscription = () => {
-    if (!newSubscriptionName || !newSubscriptionAmount) {
-      alert('Please enter both name and amount');
-      return;
-    }
-
-    const amount = parseFloat(newSubscriptionAmount);
-    if (isNaN(amount)) {
-      alert('Please enter a valid amount');
-      return;
-    }
-
+    if (!newSubscriptionName || !newSubscriptionAmount) return;
+    
     const newSubscription: Subscription = {
-      id: Date.now().toString(),
+      id: Math.random().toString(36).substr(2, 9),
       name: newSubscriptionName,
-      amount,
+      amount: parseFloat(newSubscriptionAmount),
       checked: false,
       isRecurring: newSubscriptionIsRecurring
     };
@@ -148,27 +126,8 @@ const CreditCardPayoffCalculator: React.FC = () => {
   };
 
   const handleDeleteSubscription = (id: string) => {
-    const newSubscriptions = subscriptions.filter(sub => sub.id !== id);
-    setSubscriptions(newSubscriptions);
-    updateMonthlyPayment(newSubscriptions);
+    setSubscriptions(subscriptions.filter(sub => sub.id !== id));
   };
-
-  const updateMonthlyPayment = (currentSubscriptions: Subscription[]) => {
-    // Only add one-time savings to the monthly payment
-    const oneTimeSavings = currentSubscriptions
-      .filter(sub => sub.checked && !sub.isRecurring)
-      .reduce((sum, sub) => sum + sub.amount, 0);
-
-    const basePayment = parseFloat(monthlyPayment) || 0;
-    const currentOneTimeSavings = subscriptions
-      .filter(sub => sub.checked && !sub.isRecurring)
-      .reduce((sum, sub) => sum + sub.amount, 0);
-    
-    const newPayment = basePayment - currentOneTimeSavings + oneTimeSavings;
-    setMonthlyPayment(newPayment.toString());
-  };
-
-  const progressPercentage = totalBalance > 0 ? (totalPaid / totalBalance) * 100 : 0;
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-lg">
@@ -319,61 +278,62 @@ const CreditCardPayoffCalculator: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex space-x-4 mb-4">
+      <div className="flex justify-end mb-4">
         <button
           onClick={handleCalculate}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Calculate Payoff Time
         </button>
-        <button
-          onClick={handleLogPayment}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Log This Month's Payment
-        </button>
-      </div>
-
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-3">Your Debt Payoff Progress</h3>
-        <div className="w-full bg-gray-200 rounded-full h-4">
-          <div
-            className="bg-blue-600 h-4 rounded-full transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-        <p className="mt-2 text-sm">
-          You have paid off ${totalPaid.toFixed(2)} of ${totalBalance.toFixed(2)} ({progressPercentage.toFixed(1)}%)
-        </p>
       </div>
 
       {payoffSchedule.length > 0 && (
         <div className="overflow-x-auto">
           <h3 className="text-lg font-semibold mb-3">Monthly Payment Schedule</h3>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Month</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Interest</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Recurring Expenses</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remaining</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {payoffSchedule.map((row, index) => (
-                <tr key={index}>
-                  <td className="px-4 py-2 whitespace-nowrap">{row.month}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">${row.payment.toFixed(2)}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">${row.principal.toFixed(2)}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">${row.interest.toFixed(2)}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">${row.recurringExpenses.toFixed(2)}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">${row.remaining.toFixed(2)}</td>
+          <div className="max-h-[500px] overflow-y-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Month
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Principal
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Interest
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Balance
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {payoffSchedule.map((month, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {month.month}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${month.payment.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${month.principal.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${month.interest.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${month.remaining.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
