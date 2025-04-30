@@ -15,7 +15,7 @@ import {
 
 const routes = [
     {
-        href: "/",
+        href: "/dashboard",
         label: "Dashboard",
     },
     {
@@ -75,8 +75,7 @@ export const Navigation = () => {
     }
 
     return (
-        <nav className="hidden lg:flex items-center gap-x-2
-        overflow-x-auto">
+        <nav className="flex items-center gap-x-2">
             {routes.map((route) => (
                 <NavButton
                     key={route.href}
