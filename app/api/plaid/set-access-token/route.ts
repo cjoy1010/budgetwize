@@ -44,6 +44,7 @@ export async function POST(request: Request) {
         encryptedAccessToken,
       },
       create: {
+        id: crypto.randomUUID(),
         userId,
         itemId,
         encryptedAccessToken,

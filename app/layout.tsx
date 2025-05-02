@@ -5,6 +5,7 @@ import { DebtProvider } from '../contexts/DebtContext';
 import { Suspense } from 'react';
 
 import "./globals.css";
+import FloatingChatbot from "@/components/FloatingChatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
           <DebtProvider>
             <Suspense fallback={<div>Loading...</div>}>
               {children}
+              <FloatingChatbot />
             </Suspense>
           </DebtProvider>
         </body>

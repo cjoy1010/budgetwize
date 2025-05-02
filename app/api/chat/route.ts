@@ -7,7 +7,7 @@ import { decrypt } from "@/lib/encryption";
 import { plaidClient } from "@/lib/plaid";
 
 export async function POST(request: Request) {
-  const { userId } = await auth(request);
+  const { userId } = await auth();
   if (!userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
