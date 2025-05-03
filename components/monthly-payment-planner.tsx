@@ -34,7 +34,7 @@ interface PaymentPlan {
     totalInterest: number;
 }
 
-type PaymentStrategy = "avalanche" | "snowball" | "highest-payment" | "lowest-balance" | "custom";
+type PaymentStrategy = "avalanche" | "snowball" | "highest-payment" | "custom";
 
 export default function MonthlyPaymentPlanner() {
     const { debts, isLoading, fetchDebts, setDebts } = useDebt();
@@ -135,8 +135,6 @@ export default function MonthlyPaymentPlanner() {
                     return a.currentBalance - b.currentBalance;
                 case "highest-payment":
                     return b.minimumPayment - a.minimumPayment;
-                case "lowest-balance":
-                    return a.currentBalance - b.currentBalance;
                 case "custom":
                     return 0;
                 default:
@@ -221,8 +219,6 @@ export default function MonthlyPaymentPlanner() {
                 return "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100";
             case "highest-payment":
                 return "bg-green-50 border-green-200 text-green-700 hover:bg-green-100";
-            case "lowest-balance":
-                return "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100";
             case "custom":
                 return "bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100";
             default:
@@ -266,12 +262,6 @@ export default function MonthlyPaymentPlanner() {
                                     title: "Highest Payment", 
                                     desc: "Largest Minimum Payment", 
                                     benefit: "Reduces monthly obligations" 
-                                },
-                                { 
-                                    type: "lowest-balance", 
-                                    title: "Lowest Balance", 
-                                    desc: "Smallest Total Balance", 
-                                    benefit: "Quickest total debt reduction" 
                                 },
                                 { 
                                     type: "custom", 

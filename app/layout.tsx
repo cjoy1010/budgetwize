@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs'
 import { DebtProvider } from '../contexts/DebtContext';
 import { Suspense } from 'react';
+import { Footer } from "@/components/footer";
 
 import "./globals.css";
 import FloatingChatbot from "@/components/FloatingChatbot";
@@ -31,12 +32,15 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
           suppressHydrationWarning
         >
           <DebtProvider>
             <Suspense fallback={<div>Loading...</div>}>
-              {children}
+              <div className="flex-grow">
+                {children}
+              </div>
+              <Footer />
               <FloatingChatbot />
             </Suspense>
           </DebtProvider>
