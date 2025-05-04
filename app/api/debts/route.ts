@@ -1,56 +1,52 @@
-import { NextResponse } from 'next/server';
-import { getAuth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-    try {
-        const { userId } = getAuth(req);
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const body = await req.json();
-        const { name, balance, interestRate, minimumPayment, dueDate, extraPayment } = body;
-
-        const debt = await prisma.debt.create({
-            data: {
-                userId,
-                name,
-                balance: parseFloat(balance),
-                currentBalance: parseFloat(balance),
-                interestRate: parseFloat(interestRate),
-                minimumPayment: parseFloat(minimumPayment),
-                dueDate: new Date(dueDate),
-                extraPayment: extraPayment ? parseFloat(extraPayment) : null,
-            },
-        });
-
-        return NextResponse.json(debt);
-    } catch (error) {
-        console.error('Error creating debt:', error);
-        return NextResponse.json({ error: 'Failed to create debt' }, { status: 500 });
+// GET: Return sample debts
+export async function GET() {
+  const sampleData = [
+    {
+      id: "1",
+      name: "Credit Card",
+      balance: 1200,
+      currentBalance: 1200,
+      interestRate: 15.5,
+      minimumPayment: 50,
+      dueDate: new Date().toISOString(),
+      extraPayment: null,
+      payments: [],
+    },
+    {
+      id: "2",
+      name: "Student Loan",
+      balance: 8000,
+      currentBalance: 8000,
+      interestRate: 4.5,
+      minimumPayment: 100,
+      dueDate: new Date().toISOString(),
+      extraPayment: null,
+      payments: [],
     }
+  ];
+
+  return NextResponse.json(sampleData);
 }
 
-export async function GET(req: Request) {
-    try {
-        const { userId } = getAuth(req);
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+// POST: Simulate saving a new debt
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
 
-        const debts = await prisma.debt.findMany({
-            where: {
-                userId,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+    const newDebt = {
+      ...body,
+      id: Date.now().toString(), // Simulate unique ID
+      currentBalance: body.balance,
+      payments: [],
+    };
 
-        return NextResponse.json(debts);
-    } catch (error) {
-        console.error('Error fetching debts:', error);
-        return NextResponse.json({ error: 'Failed to fetch debts' }, { status: 500 });
-    }
-} 
+    return NextResponse.json(newDebt, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to process request" },
+      { status: 400 }
+    );
+  }
+}
