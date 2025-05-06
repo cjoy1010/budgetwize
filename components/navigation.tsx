@@ -19,12 +19,12 @@ const routes = [
         label: "Dashboard",
     },
     {
-        href: "/transactions",
-        label: "Transactions",
-    },
-    {
         href: "/accounts",
         label: "Accounts",
+    },
+    {
+        href: "/transactions",
+        label: "Transactions",
     },
     {
         href: "/settings",
