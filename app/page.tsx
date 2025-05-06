@@ -9,14 +9,19 @@ const RootPage = () => {
   const router = useRouter();
 
   useEffect(() => {
+    // Use window.location for a hard redirect
     if (isSignedIn) {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } else {
-      router.push("/home");
+      window.location.href = "/home";
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn]);
 
-  return null;
+  return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  );
 };
 
 export default RootPage; 

@@ -22,10 +22,13 @@ export const Footer = () => {
             <Link href="/sign-in" className="text-gray-300 hover:text-white transition-colors">
               Sign In
             </Link>
+            <Link href="https://www.youtube.com/watch?v=your-tutorial-video-id" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors">
+              Tutorial Video
+            </Link>
           </div>
           <div className="flex flex-col space-y-4">
             <h3 className="text-lg font-semibold">Contact</h3>
-            <p className="text-gray-300">Email: support@budgetwize.com</p>
+            <p className="text-gray-300">Email: budgetwizesup@gmail.com</p>
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
