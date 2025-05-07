@@ -1,18 +1,41 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 
 export default function AccountSettings() {
-  const [email, setEmail] = useState("user@example.com");
+  const { user } = useUser();
+
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (user) {
+      setEmail(user.primaryEmailAddress?.emailAddress || "");
+    }
+  }, [user]);
+
+  const handleSave = async () => {
     if (password !== confirmPassword) {
       setMessage("Passwords do not match.");
       return;
     }
-    setMessage("Account settings saved!");
+  
+    if (!user) {
+      setMessage("User not found.");
+      return;
+    }
+  
+    try {
+      await user.updatePassword({ newPassword: password });
+      setMessage("Password updated successfully!");
+      setPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Password update error:", error);
+      setMessage("Failed to update password. Make sure your account uses a password login.");
+    }
   };
 
   return (
@@ -22,9 +45,9 @@ export default function AccountSettings() {
         <label className="block font-medium">Email</label>
         <input
           type="email"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded bg-gray-100"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          readOnly // Remove this if you want users to edit their email
         />
       </div>
       <div className="mb-4">
@@ -45,7 +68,10 @@ export default function AccountSettings() {
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
       </div>
-      <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+      <button
+        onClick={handleSave}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
         Save Changes
       </button>
       {message && <p className="mt-2 text-green-600">{message}</p>}
