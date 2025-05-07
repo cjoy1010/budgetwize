@@ -40,13 +40,18 @@ interface Transaction {
 
 // Category color mapping (inspired by Bank of America)
 const CATEGORY_COLORS: Record<string, string> = {
-  Education: "#003f5c",
-  Dining: "#bc5090",
-  Groceries: "#ffa600",
-  Transportation: "#58508d",
-  Shopping: "#ff6361",
-  Health: "#2f4b7c",
-  Other: "#888888",
+  "Education": "#6a0dad",          // Purple
+  "Dining": "#c0392b",             // Red
+  "Groceries": "#27ae60",          // Green
+  "Transportation": "#2980b9",     // Blue
+  "Shopping & Entertainment": "#f39c12", // Orange
+  "Health": "#1abc9c",             // Teal
+  "Cash, Checks & Misc": "#d35400", // Dark Orange
+  "Personal & Family Care": "#145a32", // Dark Green
+  "Home & Utilities": "#2e86c1",   // Medium Blue
+  "Finance": "#8e44ad",            // Violet
+  "Restaurants & Dining": "#e74c3c", // Bright Red
+  "Other": "#7f8c8d"               // Gray fallback
 };
 
 const TransactionsPage: React.FC = () => {
@@ -175,6 +180,18 @@ const TransactionsPage: React.FC = () => {
           <CardTitle>Spending by Category</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center">
+          <div className="relative w-[300px] h-[300px]">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+              <div className="text-sm text-gray-500">Total Spending</div>
+              <div className="text-xl font-bold">
+                ${categoryData.reduce((sum, item) => sum + item.value, 0).toFixed(2)}
+              </div>
+              <div className="text-xs text-gray-400">
+                in {new Date().toLocaleString("default", { month: "long", year: "numeric" })}
+              </div>
+            </div>
+          </div>
+
           <PieChart width={300} height={300}>
             <Pie
               data={categoryData}
