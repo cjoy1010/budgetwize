@@ -13,7 +13,7 @@ export default function Home() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Debt Management Dashboard</h1>
           <div className="flex items-center">
-            <UserButton afterSignOutUrl="/" />
+          
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
