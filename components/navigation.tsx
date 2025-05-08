@@ -10,6 +10,8 @@ import { NavButton } from "@/components/nav-button";
 import {
     Sheet,
     SheetContent,
+    SheetHeader,
+    SheetTitle,
     SheetTrigger,
 } from"@/components/ui/sheet";
 
@@ -47,7 +49,7 @@ export const Navigation = () => {
     if (isMobile) {
         return (
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger>
+                <SheetTrigger asChild>
                     <Button
                         variant="outline"
                         size="sm"
@@ -57,15 +59,18 @@ export const Navigation = () => {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="px-2">
+                    <SheetHeader>
+                        <SheetTitle className="text-lg font-semibold">Navigation</SheetTitle>
+                    </SheetHeader>
                     <nav className="flex flex-col gap-y-2 pt-6">
                         {routes.map((route) => (
                             <Button
-                            key={route.href}
+                                key={route.href}
                                 variant={route.href === pathname ? "secondary" : "ghost"}
                                 onClick={() => onClick(route.href)}
                                 className="w-full justify-start"
-                                >
-                                    {route.label}
+                            >
+                                {route.label}
                             </Button>
                         ))}
                     </nav>
@@ -73,6 +78,7 @@ export const Navigation = () => {
             </Sheet>
         );
     }
+
 
     return (
         <nav className="flex items-center gap-x-2">

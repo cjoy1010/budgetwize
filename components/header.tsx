@@ -30,11 +30,15 @@ export const Header = () => {
                         </ClerkLoaded>
                     ) : (
                         <div className="flex gap-3 items-center">
-                            <Link href="/sign-up">
-                                <Button variant="outline" className="rounded-full cursor-pointer">Get Started</Button>
+                            <Link href="/sign-up" passHref>
+                                <Button asChild variant="outline" className="rounded-full cursor-pointer">
+                                    <span>Get Started </span>
+                                    </Button>
                             </Link>
-                            <Link href="/sign-in">
-                                <Button className="rounded-full cursor-pointer">Sign In</Button>
+                            <Link href="/sign-in" passHref>
+                                <Button asChild className="rounded-full cursor-pointer">
+                                    <span>Sign In </span>
+                                    </Button>
                             </Link>
                         </div>
                     )}
